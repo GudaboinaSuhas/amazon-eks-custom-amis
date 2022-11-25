@@ -1,0 +1,175 @@
+diff --git a/Makefile b/Makefile
+index 9b8133b..ab91b1a 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,8 +1,8 @@
+ 
+ PACKER_VARIABLES := binary_bucket_name binary_bucket_region eks_version eks_build_date cni_plugin_version root_volume_size data_volume_size hardening_flag http_proxy https_proxy no_proxy
+-VPC_ID := vpc-0e8cf1ce122b1b059
+-SUBNET_ID := subnet-0eddf1d7d0f9f9772
+-AWS_REGION := us-east-2
++VPC_ID := vpc-0fde5b69
++SUBNET_ID := subnet-40311d09
++AWS_REGION := us-east-1
+ PACKER_FILE := 
+ 
+ EKS_BUILD_DATE := 2020-11-02
+@@ -11,6 +11,8 @@ EKS_116_VERSION := 1.16.15
+ EKS_117_VERSION := 1.17.12
+ EKS_118_VERSION := 1.18.9
+ EKS_119_VERSION := 1.19.6
++EKS_120_VERSION := 1.20.11
++EKS_121_VERSION := 1.21.5
+ 
+ build:
+ 	packer build \
+@@ -71,6 +73,35 @@ build-ubuntu2004-1.18:
+ build-ubuntu2004-1.19:
+ 	$(MAKE) build PACKER_FILE=amazon-eks-node-ubuntu2004.json eks_version=$(EKS_119_VERSION) eks_build_date=2021-01-05
+ 
++
++# Debian 10
++#-----------------------------------------------------
++
++build-debian10-1.19:
++	$(MAKE) build PACKER_FILE=amazon-eks-node-debian10.json eks_version=$(EKS_119_VERSION) eks_build_date=2021-01-05
++
++build-debian10-1.20:
++	$(MAKE) build PACKER_FILE=amazon-eks-node-debian10.json eks_version=$(EKS_120_VERSION) eks_build_date=2021-11-10
++
++build-debian10-1.21:
++	$(MAKE) build PACKER_FILE=amazon-eks-node-debian10.json eks_version=$(EKS_121_VERSION) eks_build_date=2022-01-21
++
++
++
++
++# Debian 11
++#-----------------------------------------------------
++
++build-debian11-1.19:
++	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11.json eks_version=$(EKS_119_VERSION) eks_build_date=2021-01-05
++
++build-debian11-1.20:
++	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11.json eks_version=$(EKS_120_VERSION) eks_build_date=2021-11-10
++
++build-debian11-1.21:
++	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11.json eks_version=$(EKS_121_VERSION) eks_build_date=2022-01-21
++
++
+ # RHEL 7
+ #-----------------------------------------------------
+ build-rhel7-1.15:
+diff --git a/files/functions.sh b/files/functions.sh
+index 6932227..4461f67 100755
+--- a/files/functions.sh
++++ b/files/functions.sh
+@@ -84,6 +84,10 @@ is_ubuntu() {
+     [[ $(lsb_release -sd) == "Ubuntu"* ]]
+ }
+ 
++is_debian() {
++    [[ $(lsb_release -sd) == "Debian"* ]]
++}
++
+ ################################################################
+ # Test if it is Ubuntu 18.04
+ # 
+@@ -219,6 +223,11 @@ install_ssmagent() {
+         snap install amazon-ssm-agent --classic
+         systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
+         systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service
++    elif is_debian; then
++        apt install snapd -y
++        snap install amazon-ssm-agent --classic
++        systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
++        systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service
+     else
+         yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+         systemctl enable amazon-ssm-agent && systemctl start amazon-ssm-agent
+@@ -241,7 +250,7 @@ install_openscap() {
+         yum install -y openscap openscap-scanner scap-security-guide
+     elif is_amazonlinux2; then
+         yum install -y openscap openscap-scanner scap-security-guide
+-    elif is_ubuntu; then
++    elif is_ubuntu || is_debian; then
+         apt-get install -y libopenscap8 ssg-debian ssg-debderived
+     else
+         echo "failed to install the openscap libraries"
+@@ -437,6 +446,16 @@ configure_docker_environment() {
+     echo "EnvironmentFile=/etc/environment" >> "${docker_env_file}"
+ }
+ 
++configure_containerd_environment() {
++    
++    
++    curl -sL -o /etc/containerd/config.toml https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/files/containerd-config.toml 
++    curl -sL -o /etc/systemd/system/sandbox-image.service https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/files/sandbox-image.service
++    curl -sL -o /etc/systemd/system/kubelet.service https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/files/kubelet-containerd.service
++    
++
++}
++
+ configure_kubelet_environment() {
+     local kubelet_dir="/etc/systemd/system/kubelet.service.d"
+     local kubelet_env_file="${kubelet_dir}/environment.conf"
+diff --git a/scripts/shared/cis-docker.sh b/scripts/shared/cis-docker.sh
+index 5162f06..d99882b 100755
+--- a/scripts/shared/cis-docker.sh
++++ b/scripts/shared/cis-docker.sh
+@@ -22,8 +22,8 @@ echo "[not scored] - 1.1.1 ensure the container host has been hardened"
+ echo "1.1.2 - ensure that the version of Docker is up to date"
+ docker version
+ 
+-echo "1.2.1 - ensure a separate partition for containers has been created"
+-grep '/var/lib/docker\s' /proc/mounts
++#echo "1.2.1 - ensure a separate partition for containers has been created"
++#grep '/var/lib/docker\s' /proc/mounts
+ 
+ echo "1.2.2 - ensure only trusted users are allowed to control Docker daemon"
+ getent group docker
+diff --git a/scripts/shared/docker.sh b/scripts/shared/docker.sh
+index 59fea1d..5d522a9 100644
+--- a/scripts/shared/docker.sh
++++ b/scripts/shared/docker.sh
+@@ -53,6 +53,14 @@ elif is_ubuntu; then
+   apt-get update -y
+   apt-get install -y docker-ce docker-ce-cli containerd.io
+ 
++elif is_debian; then
++
++  sudo apt-get install -y ca-certificates curl gnupg lsb-release
++  curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
++  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
++  sudo apt-get update
++  sudo apt-get install containerd.io -y
++
+ else
+ 
+   echo "could not install docker, operating system not found!"
+diff --git a/scripts/shared/eks.sh b/scripts/shared/eks.sh
+index 3e45433..aa16df4 100644
+--- a/scripts/shared/eks.sh
++++ b/scripts/shared/eks.sh
+@@ -31,7 +31,7 @@ elif (is_rhel && is_rhel_7) || (is_centos && is_centos_7); then
+         socat \
+         unzip
+ 
+-elif is_ubuntu; then
++elif is_ubuntu || is_debian; then
+ 
+     apt-get install -y \
+         conntrack \
+diff --git a/scripts/ubuntu2004/boilerplate.sh b/scripts/ubuntu2004/boilerplate.sh
+index db95af4..7dc6e48 100644
+--- a/scripts/ubuntu2004/boilerplate.sh
++++ b/scripts/ubuntu2004/boilerplate.sh
+@@ -36,7 +36,7 @@ install_awscliv2
+ install_ssmagent
+ 
+ # partition the disks
+-systemctl stop rsyslog irqbalance polkit
+-partition_disks /dev/nvme1n1
++systemctl stop rsyslog #irqbalance polkit
++#partition_disks /dev/nvme1n1
+ 
+ reboot
