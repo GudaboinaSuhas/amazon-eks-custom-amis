@@ -2,7 +2,7 @@
   "variables":{
     "aws_region":"us-east-1",
     "ami_description":"EKS Kubernetes Worker AMI on Debian 10 (k8s: {{user `eks_version`}})",
-    "eks_version":"1.23",
+    "eks_version":"1.24",
     "eks_build_date":"",
     "cni_plugin_version": "v0.8.6",
     "binary_bucket_name": "amazon-eks",
@@ -10,18 +10,18 @@
     "hardening_flag": "false",
     "root_volume_size": "10",
     "data_volume_size": "50",
-    "vpc_id":"vpc-752*****",
-    "subnet_id":"subnet-0618547d7*****",
+    "vpc_id":"vpc-***",
+    "subnet_id":"subnet-***",
     "http_proxy": "",
     "https_proxy": "",
     "no_proxy": "",
 
-    "source_ami_owner": "71653*****",
-    "source_ami_owner_govcloud": "71653*****",
+    "source_ami_owner": "***",
+    "source_ami_owner_govcloud": "****",
     "source_ami_ssh_user": "admin",
     "source_ami_arch":"x86_64",
     "source_ami_name":"EKSDebian10AMDHardened-UlimitsUpdated",
-    "target_ami_name": "EKS{{user `eks_version`}}-TestAMI_TOBEDelete-{{ timestamp }}"
+    "target_ami_name": "EKS{{user `eks_version`}}-Deb10-AMD-{{ timestamp }}"
   },
   "builders":[
     {
@@ -100,9 +100,10 @@
     {
       "type":"shell",
       "scripts":[
+        
         "./scripts/shared/docker.sh",
         "./scripts/shared/eks.sh",
-        "./scripts/shared/cis-docker.sh",
+        "./scripts/shared/cis-docker-nvidia.sh",
         "./scripts/shared/cis-eks.sh"
       ],
       "environment_vars": [

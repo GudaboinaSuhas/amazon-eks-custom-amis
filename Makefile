@@ -1,7 +1,7 @@
 
 PACKER_VARIABLES := binary_bucket_name binary_bucket_region eks_version eks_build_date cni_plugin_version root_volume_size data_volume_size hardening_flag http_proxy https_proxy no_proxy
-VPC_ID := vpc-75*****
-SUBNET_ID := subnet-061*******
+VPC_ID := vpc-***
+SUBNET_ID := subnet-***
 AWS_REGION := us-east-1
 PACKER_FILE := 
 
@@ -16,6 +16,10 @@ EKS_121_VERSION := 1.21.14
 
 EKS_122_VERSION := 1.22.15
 EKS_123_VERSION := 1.23.12
+
+EKS_124_VERSION := 1.24.7
+
+EKS_124_9_VERSION := 1.24.9
 
 build:
 	packer build \
@@ -44,6 +48,9 @@ build-debian10-1.22:
 build-debian10-1.23:
 	$(MAKE) build PACKER_FILE=amazon-eks-node-debian10-hardened.json eks_version=$(EKS_123_VERSION) eks_build_date=2022-10-05
 
+build-debian10-1.24:
+	$(MAKE) build PACKER_FILE=amazon-eks-node-debian10-hardened.json eks_version=$(EKS_124_VERSION) eks_build_date=2022-10-31
+
 
 # Debian 10 - ARM
 #-----------------------------------------------------
@@ -57,17 +64,31 @@ build-debian10-arm-1.22:
 build-debian10-arm-1.23:
 	$(MAKE) build PACKER_FILE=amazon-eks-node-debian10-arm-hardened.json eks_version=$(EKS_123_VERSION) eks_build_date=2022-10-05
 
+build-debian10-arm-1.24:
+	$(MAKE) build PACKER_FILE=amazon-eks-node-debian10-arm-hardened.json eks_version=$(EKS_124_9_VERSION) eks_build_date=2023-01-11
+
 
 
 # Debian 11
 #-----------------------------------------------------
 
-build-debian11-1.19:
-	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11.json eks_version=$(EKS_119_VERSION) eks_build_date=2021-01-05
+build-debian11-1.23:
+	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11-hardened.json eks_version=$(EKS_123_VERSION) eks_build_date=2022-10-05
 
-build-debian11-1.20:
-	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11.json eks_version=$(EKS_120_VERSION) eks_build_date=2021-11-10
+build-debian11-arm-1.23:
+	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11-arm-hardened.json eks_version=$(EKS_123_VERSION) eks_build_date=2022-10-05
 
-build-debian11-1.21:
-	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11.json eks_version=$(EKS_121_VERSION) eks_build_date=2022-01-21
+build-debian11-1.24:
+	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11-hardened.json eks_version=$(EKS_124_VERSION) eks_build_date=2022-10-31
 
+build-debian11-arm-1.24:
+	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11-arm-hardened.json eks_version=$(EKS_124_VERSION) eks_build_date=2022-10-31
+
+build-debian11-1.24-9:
+	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11-hardened.json eks_version=$(EKS_124_9_VERSION) eks_build_date=2023-01-11
+
+build-debian11-nvidia-1.24-9:
+	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11-hardened-nvidia.json eks_version=$(EKS_124_9_VERSION) eks_build_date=2023-01-11
+
+build-debian11-arm-1.24-9:
+	$(MAKE) build PACKER_FILE=amazon-eks-node-debian11-arm-hardened.json eks_version=$(EKS_124_9_VERSION) eks_build_date=2023-01-11

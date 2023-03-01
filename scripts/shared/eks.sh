@@ -33,6 +33,7 @@ elif (is_rhel && is_rhel_7) || (is_centos && is_centos_7); then
 
 elif is_ubuntu || is_debian; then
 
+    sleep 180
     apt-get install -y \
         conntrack \
         curl \
@@ -120,7 +121,7 @@ mkdir -p /etc/systemd/system/kubelet.service.d
 curl -sL -o /var/lib/kubelet/kubeconfig https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/files/kubelet-kubeconfig
 chown root:root /var/lib/kubelet/kubeconfig
 
-curl -sL -o /etc/systemd/system/kubelet.service https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/files/kubelet.service
+curl -sL -o /etc/systemd/system/kubelet.service https://raw.githubusercontent.com/awslabs/amazon-eks-ami/2485779f6918a2154d53875157914547fe57bad5/files/kubelet.service
 chown root:root /etc/systemd/system/kubelet.service
 
 curl -sL -o /etc/kubernetes/kubelet/kubelet-config.json https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/files/kubelet-config.json

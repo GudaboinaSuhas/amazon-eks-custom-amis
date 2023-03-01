@@ -19,55 +19,52 @@ mkdir -p /etc/docker/certs.d/
 echo "1.1.1 - ensure the container host has been hardened"
 echo "[not scored] - 1.1.1 ensure the container host has been hardened"
 
-echo "1.1.2 - ensure that the version of Docker is up to date"
-yum -y update docker
+#echo "1.1.2 - ensure that the version of Docker is up to date"
+#yum -y update docker
 
-echo "1.2.1 - ensure a separate partition for containers has been created"
-grep '/var/lib/docker\s' /proc/mounts
+#echo "1.2.1 - ensure a separate partition for containers has been created"
+#grep '/var/lib/docker\s' /proc/mounts
 
 echo "1.2.2 - ensure only trusted users are allowed to control Docker daemon"
 getent group docker
 
-echo "1.2.3 - ensure auditing is configured for the Docker daemon"
-echo "-w /usr/bin/dockerd -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w /usr/bin/docker -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "1.2.3 - ensure auditing is configured for the Docker daemon"
+# echo "-w /usr/bin/dockerd -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w /usr/bin/docker -k docker" >> /etc/audit/rules.d/docker.rules
 
-echo "1.2.4 - 1.2.12 - ensure auditing is configured for Docker files and directories"
-echo "-w /var/lib/docker -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w /etc/docker -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w /etc/default/docker -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w /etc/sysconfig/docker -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w /etc/docker/daemon.json -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w /usr/bin/containerd -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w /usr/bin/docker-containerd -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w /usr/bin/runc -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w /usr/bin/docker-runc -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w ${DOCKER_SERVICE_PATH} -k docker" >> /etc/audit/rules.d/docker.rules
-echo "-w ${DOCKER_SOCKET_PATH} -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "1.2.4 - 1.2.12 - ensure auditing is configured for Docker files and directories"
+# echo "-w /var/lib/docker -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w /etc/docker -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w /etc/default/docker -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w /etc/sysconfig/docker -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w /etc/docker/daemon.json -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w /usr/bin/containerd -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w /usr/bin/docker-containerd -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w /usr/bin/runc -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w /usr/bin/docker-runc -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w ${DOCKER_SERVICE_PATH} -k docker" >> /etc/audit/rules.d/docker.rules
+# echo "-w ${DOCKER_SOCKET_PATH} -k docker" >> /etc/audit/rules.d/docker.rules
 
 echo "2.1 - 2.17 - ensure the docker configuration is secure"
 cat > /etc/docker/daemon.json <<EOF
 {
+  "default-runtime": "nvidia",
   "bridge": "none",
+  "exec-opts": ["native.cgroupdriver=systemd"],
   "log-level": "info",
   "log-driver": "json-file",
   "log-opts": {
     "max-size": "10m",
-    "max-file": "5"
+    "max-file": "10"
   },
   "icc": false,
   "iptables": true,
   "storage-driver": "overlay2",
   "default-ulimits": {
-    "nofile": {
-      "Name": "nofile",
-      "Hard": 200,
-      "Soft": 100
-    },
-    "nofile": {
-      "Name": "nproc",
-      "Hard": 2048,
-      "Soft": 1024
+    "memlock": {
+      "Hard": -1,
+      "Name": "memlock",
+      "Soft": -1
     }
   },
   "live-restore": true,
@@ -75,7 +72,13 @@ cat > /etc/docker/daemon.json <<EOF
   "max-concurrent-downloads": 10,
   "experimental": false,
   "insecure-registries": [],
-  "no-new-privileges": true
+  "no-new-privileges": true,
+  "runtimes": {
+        "nvidia": {
+            "path": "nvidia-container-runtime",
+            "runtimeArgs": []
+        }
+  }
 }
 EOF
 

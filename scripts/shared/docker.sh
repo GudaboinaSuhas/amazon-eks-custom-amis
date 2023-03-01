@@ -61,6 +61,10 @@ elif is_debian; then
   sudo apt-get update
   sudo apt-get install docker-ce docker-ce-cli containerd.io -y && sudo apt-get clean && sudo apt-get autoremove -y
 
+  # Need to set SystemdCgroup = true for Debian11 to prevent pod restarts due to high resource consumption
+  containerd config default | sudo tee /etc/containerd/config.toml
+  sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
 
 else
 

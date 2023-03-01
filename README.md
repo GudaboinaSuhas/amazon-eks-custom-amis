@@ -1,47 +1,24 @@
 # Amazon EKS Custom AMIs
 
+## This is a forked repository from aws-samples/amazon-eks-custom-amis
+## Customized to support generate EKS Optimized images for Debian 10/11 for EKS v1.21, v1.22 and v1.23
+
+#
+#
+
 This repository contains [Packer](https://packer.io/) configurations to create custom AMIs based on the [Amazon EKS optimized AMI](https://github.com/awslabs/amazon-eks-ami). The Amazon EKS Optimized AMI remains the preferred way to deploy containers on Amazon EKS and the configurations provided here are intended to provide a starting point for customers looking to implement custom EKS Optimized AMIs to meet additional security and compliance requirements.
 
 This project applies the Docker CIS Benchmark and Amazon EKS CIS Benchmark to all AMIs. It also provides a number of additional hardening benchmarks such as DISA STIG, PCI-DSS, and HIPAA. These are based on [OpenSCAP](https://www.open-scap.org/) and other open source hardening guidelines.
 
 _Scripts and artifacts created by this repository do not guarantee compliance nor are these AMIs are not officially supported by AWS. It is up to users to review and validate for their individual use cases._
 
-## Supported Distributions
 
-The following AMI distributions are supported by this repository. This repository is not officially supported by AWS or Amazon EKS.
-
-| Distribution | Version | Architecture |     Available      | Supported Hardening |
-| :----------- | :-----: | :----------: | :----------------: | ------------------- |
-| Amazon Linux |    2    |    x86_64    | :white_check_mark: | CIS Benchmark       |
-| Amazon Linux |    2    |    arm64     | :white_check_mark: | CIS Benchmark       |
-
-The Amazon Linux 2 EKS Optmized AMI is used as the base for this image. This image extends the EKS Optimized AMI to apply the Amazon Linux 2 CIS Benchmark, Docker CIS Benchmark, and Amazon EKS CIS Benchmark. These benchmarks are typically used to meet NIST 800-53 controls. Hardening is provided as a "best effort" and does not guarantee compliance with the above frameworks.
 
 ## Prerequisites
 
 - [Packer](https://packer.io/) v1.7+ - [installation instructions](https://learn.hashicorp.com/tutorials/packer/get-started-install-cli)
 
-## Build an AMI
 
-Users will need to have a default VPC in the region where the AMI will be created, or provide a subnet ID via the `subnet_id` variable. The remaining variables are optional and can be modified to suit; either through the appropriate `*.pkrvars.hcl` file or by passing via `-var 'key=value'` on the Packer CLI. See the `variables.pkr.hcl` file for variables that are available for customization.
-
-First, inialize the project:
-
-```sh
-packer init -upgrade .
-```
-
-To build an x86_64 based archicture AMI:
-
-```sh
-packer build -var-file=al2_x86_64.pkrvars.hcl -var 'subnet_id=subnet-01abc23' .
-```
-
-To build an arm64 based archicture AMI:
-
-```sh
-packer build -var-file=al2_arm64.pkrvars.hcl -var 'subnet_id=subnet-01abc23' .
-```
 
 ## Use AMI
 
