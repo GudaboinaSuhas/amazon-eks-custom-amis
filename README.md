@@ -1,7 +1,7 @@
 # Amazon EKS Custom AMIs
 
 ## This is a forked repository from aws-samples/amazon-eks-custom-amis
-## Customized to support generate EKS Optimized images for Debian 10/11 for EKS v1.21, v1.22 and v1.23
+## Customized to support generate EKS Optimized images for Debian 10/11 for EKS v1.21 to v1.24
 
 #
 #
